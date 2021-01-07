@@ -1,1 +1,1 @@
-# chess_with_ai
+# Chessy the worlds most advanced opensource Chess Engine
