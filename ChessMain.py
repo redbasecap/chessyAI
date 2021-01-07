@@ -28,7 +28,7 @@ def main():
     p.init()
     screen = p.display.set_mode((WIDTH, HEIGHT))
     clock = p.time.Clock()
-    screen.fill(p.Color("black"))
+    # screen.fill(p.Color("black"))
     gs = ChessEngine.GameState()
     load_images()
     running = True
@@ -50,7 +50,12 @@ def main():
                     sq_selected = (row, col)
                     player_clicks.append(sq_selected)
 
-                if len(player_clicks) == 2: #action after the second click
+                if len(player_clicks) == 2:      #action after the second click
+                    move = ChessEngine.Move(player_clicks[0], player_clicks[1], gs.board)
+                    print(move.get_chess_notation())
+                    gs.make_a_move(move)
+                    sq_selected = () #reset the user clicks
+                    player_clicks = [] #reset the user clicks
 
 
 
