@@ -506,7 +506,7 @@ def draw_welcome_screen(screen):
 
     # Titel
     title_font = p.font.SysFont("Arial", 42, True, False)
-    title = title_font.render("♔ ChessyAI ♚", True, p.Color(255, 215, 0))
+    title = title_font.render("ChessyAI", True, p.Color(255, 215, 0))
     screen.blit(title, (center_x - title.get_width() // 2, y_offset))
     y_offset += 55
 
@@ -531,7 +531,7 @@ def draw_welcome_screen(screen):
 
     # Tastenbelegung Titel
     header_font = p.font.SysFont("Arial", 20, True, False)
-    header = header_font.render("⌨ Tastenbelegung", True, p.Color(100, 200, 255))
+    header = header_font.render("Tastenbelegung", True, p.Color(100, 200, 255))
     screen.blit(header, (center_x - header.get_width() // 2, box_y + 15))
 
     # Tasten-Liste
@@ -573,8 +573,8 @@ def draw_welcome_screen(screen):
     # Maussteuerung
     mouse_font = p.font.SysFont("Arial", 14, False, False)
     mouse_info = [
-        "🖱 Klicke auf eine Figur, dann auf das Zielfeld",
-        "🎯 Gültige Züge werden grün hervorgehoben",
+        "Klicke auf eine Figur, dann auf das Zielfeld",
+        "Gueltige Zuege werden gruen hervorgehoben",
     ]
 
     for info in mouse_info:
@@ -614,7 +614,7 @@ def draw_ai_analysis(screen, gs):
 
     # Titel
     title_font = p.font.SysFont("Arial", 18, True, False)
-    title = title_font.render("🤖 KI-Analyse (Minimax)", True, p.Color(100, 200, 255))
+    title = title_font.render("KI-Analyse (Minimax)", True, p.Color(100, 200, 255))
     screen.blit(title, (panel_x + 10, 10))
 
     y_offset = 45
@@ -693,8 +693,8 @@ def draw_ai_analysis(screen, gs):
             else:
                 move_color = p.Color(255, 100, 100)  # Rot - schlecht
 
-            # Rang-Symbol
-            rank_symbols = ["🥇", "🥈", "🥉", "4.", "5.", "6.", "7.", "8."]
+            # Rang-Symbol (ASCII-kompatibel)
+            rank_symbols = ["1.", "2.", "3.", "4.", "5.", "6.", "7.", "8."]
             rank = rank_symbols[i] if i < len(rank_symbols) else f"{i+1}."
 
             # Score formatieren
