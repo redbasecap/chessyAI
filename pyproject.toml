@@ -1,6 +1,6 @@
 [project]
 name = "chessyai"
-version = "2.0.0"
+version = "2.1.1"
 description = "A fully-featured chess engine with graphical user interface and AI opponent"
 readme = "README.md"
 license = { text = "MIT" }
