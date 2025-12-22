@@ -1,5 +1,5 @@
 [project]
-name = "chessy"
+name = "chessyai"
 version = "2.0.0"
 description = "A fully-featured chess engine with graphical user interface and AI opponent"
 readme = "README.md"
@@ -26,9 +26,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/redbasecap/chessy"
-Repository = "https://github.com/redbasecap/chessy"
-Issues = "https://github.com/redbasecap/chessy/issues"
+Homepage = "https://github.com/redbasecap/ChessyAI"
+Repository = "https://github.com/redbasecap/ChessyAI"
+Issues = "https://github.com/redbasecap/ChessyAI/issues"
 
 [project.scripts]
 chessy = "ChessMain:main"

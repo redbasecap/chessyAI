@@ -10,6 +10,7 @@ from datetime import datetime
 WIDTH = HEIGHT = 513  # 512 x 512 px
 MOVE_LOG_PANEL_WIDTH = 250
 MOVE_LOG_PANEL_HEIGHT = HEIGHT
+AI_PANEL_WIDTH = 300  # Breite des AI-Analyse-Panels
 DIMENSION = 8
 SQ_SIZE = HEIGHT // DIMENSION
 MAX_FPS = 60  # Erhöht für flüssige Animationen
@@ -71,8 +72,13 @@ def main():
     p.init()
     p.mixer.init()
 
-    screen = p.display.set_mode((WIDTH + MOVE_LOG_PANEL_WIDTH, HEIGHT))
-    p.display.set_caption("Chessy - Chess Engine")
+    # AI Visualisierung Toggle
+    show_ai_analysis = False
+    show_welcome = True  # Willkommensbildschirm anzeigen
+    window_width = WIDTH + MOVE_LOG_PANEL_WIDTH
+
+    screen = p.display.set_mode((window_width, HEIGHT))
+    p.display.set_caption("ChessyAI - Chess Engine")
     clock = p.time.Clock()
 
     gs = ChessEngine.GameState()
@@ -115,6 +121,9 @@ def main():
 
             # Mausklick
             elif e.type == p.MOUSEBUTTONDOWN:
+                if show_welcome:
+                    show_welcome = False
+                    continue
                 if not game_over and human_turn and not promotion_screen:
                     location = p.mouse.get_pos()
                     col = location[0] // SQ_SIZE
@@ -186,6 +195,14 @@ def main():
                     black_time = INITIAL_TIME
                 if e.key == p.K_s:  # S = Speichern als PGN
                     save_pgn(gs)
+                if e.key == p.K_v:  # V = AI-Visualisierung Toggle
+                    show_ai_analysis = not show_ai_analysis
+                    window_width = (
+                        WIDTH
+                        + MOVE_LOG_PANEL_WIDTH
+                        + (AI_PANEL_WIDTH if show_ai_analysis else 0)
+                    )
+                    screen = p.display.set_mode((window_width, HEIGHT))
                 if e.key == p.K_f:  # F = KI-Zug erzwingen
                     if not game_over and human_turn:
                         ai_move = ChessAI.find_best_move(gs, valid_moves)
@@ -248,11 +265,17 @@ def main():
         if TIMER_ENABLED:
             draw_timer(screen, white_time, black_time, gs.whiteToMove)
 
+        if show_ai_analysis:
+            draw_ai_analysis(screen, gs)
+
         if promotion_screen:
             draw_promotion_screen(screen, gs.whiteToMove)
 
         if game_over:
             draw_end_game_text(screen, gs, white_time, black_time)
+
+        if show_welcome:
+            draw_welcome_screen(screen)
 
         clock.tick(MAX_FPS)
         p.display.flip()
@@ -464,10 +487,428 @@ def draw_end_game_text(screen, gs, white_time=None, black_time=None):
     screen.blit(text_object, text_location)
 
     small_font = p.font.SysFont("Helvetica", 16, False, False)
-    hint = "R=Neustart | Z=Rückgängig | S=PGN Speichern"
+    hint = "R=Neustart | Z=Rückgängig | S=PGN Speichern | V=KI-Analyse"
     hint_object = small_font.render(hint, True, p.Color("white"))
     hint_location = (WIDTH // 2 - hint_object.get_width() // 2, HEIGHT // 2 + 20)
     screen.blit(hint_object, hint_location)
+
+
+def draw_welcome_screen(screen):
+    """Zeigt den Willkommensbildschirm mit Tastenbelegung"""
+    # Halbtransparenter Hintergrund
+    overlay = p.Surface((WIDTH + MOVE_LOG_PANEL_WIDTH, HEIGHT))
+    overlay.set_alpha(230)
+    overlay.fill(p.Color(20, 20, 30))
+    screen.blit(overlay, (0, 0))
+
+    center_x = (WIDTH + MOVE_LOG_PANEL_WIDTH) // 2
+    y_offset = 40
+
+    # Titel
+    title_font = p.font.SysFont("Arial", 42, True, False)
+    title = title_font.render("♔ ChessyAI ♚", True, p.Color(255, 215, 0))
+    screen.blit(title, (center_x - title.get_width() // 2, y_offset))
+    y_offset += 55
+
+    # Untertitel
+    subtitle_font = p.font.SysFont("Arial", 18, False, True)
+    subtitle = subtitle_font.render(
+        "Schach-Engine mit KI-Gegner", True, p.Color(180, 180, 200)
+    )
+    screen.blit(subtitle, (center_x - subtitle.get_width() // 2, y_offset))
+    y_offset += 50
+
+    # Tastenbelegung Box
+    box_width = 400
+    box_height = 280
+    box_x = center_x - box_width // 2
+    box_y = y_offset
+
+    # Box-Hintergrund
+    box_rect = p.Rect(box_x, box_y, box_width, box_height)
+    p.draw.rect(screen, p.Color(40, 40, 55), box_rect, border_radius=10)
+    p.draw.rect(screen, p.Color(100, 100, 140), box_rect, 2, border_radius=10)
+
+    # Tastenbelegung Titel
+    header_font = p.font.SysFont("Arial", 20, True, False)
+    header = header_font.render("⌨ Tastenbelegung", True, p.Color(100, 200, 255))
+    screen.blit(header, (center_x - header.get_width() // 2, box_y + 15))
+
+    # Tasten-Liste
+    key_font = p.font.SysFont("Arial", 16, True, False)
+    desc_font = p.font.SysFont("Arial", 16, False, False)
+
+    keys = [
+        ("V", "KI-Analyse Panel ein/ausblenden", p.Color(100, 255, 150)),
+        ("Z", "Letzten Zug rückgängig machen", p.Color(255, 200, 100)),
+        ("R", "Neues Spiel starten", p.Color(255, 150, 150)),
+        ("S", "Partie als PGN speichern", p.Color(150, 200, 255)),
+        ("F", "KI-Zug erzwingen (für Weiß)", p.Color(200, 150, 255)),
+    ]
+
+    key_y = box_y + 55
+    for key, description, color in keys:
+        # Taste in Box
+        key_box = p.Rect(box_x + 30, key_y, 40, 30)
+        p.draw.rect(screen, p.Color(60, 60, 80), key_box, border_radius=5)
+        p.draw.rect(screen, color, key_box, 2, border_radius=5)
+
+        key_text = key_font.render(key, True, color)
+        screen.blit(
+            key_text,
+            (
+                key_box.centerx - key_text.get_width() // 2,
+                key_box.centery - key_text.get_height() // 2,
+            ),
+        )
+
+        # Beschreibung
+        desc_text = desc_font.render(description, True, p.Color(200, 200, 210))
+        screen.blit(desc_text, (box_x + 90, key_y + 5))
+
+        key_y += 42
+
+    y_offset = box_y + box_height + 25
+
+    # Maussteuerung
+    mouse_font = p.font.SysFont("Arial", 14, False, False)
+    mouse_info = [
+        "🖱 Klicke auf eine Figur, dann auf das Zielfeld",
+        "🎯 Gültige Züge werden grün hervorgehoben",
+    ]
+
+    for info in mouse_info:
+        text = mouse_font.render(info, True, p.Color(150, 150, 170))
+        screen.blit(text, (center_x - text.get_width() // 2, y_offset))
+        y_offset += 22
+
+    # Start-Hinweis
+    y_offset += 20
+    start_font = p.font.SysFont("Arial", 20, True, False)
+    start_text = start_font.render(
+        "Klicke irgendwo um zu starten!", True, p.Color(255, 255, 100)
+    )
+
+    # Blinkeffekt
+    alpha = int(128 + 127 * abs((p.time.get_ticks() % 1000) / 500 - 1))
+    start_surface = p.Surface(start_text.get_size(), p.SRCALPHA)
+    start_surface.fill((255, 255, 100, alpha))
+    start_text_final = start_font.render(
+        "Klicke irgendwo um zu starten!", True, p.Color(255, 255, 100)
+    )
+
+    screen.blit(start_text_final, (center_x - start_text.get_width() // 2, y_offset))
+
+
+def draw_ai_analysis(screen, gs):
+    """Zeichnet das AI-Analyse Panel mit Minimax-Visualisierung"""
+    panel_x = WIDTH + MOVE_LOG_PANEL_WIDTH
+    panel_rect = p.Rect(panel_x, 0, AI_PANEL_WIDTH, HEIGHT)
+
+    # Hintergrund
+    p.draw.rect(screen, p.Color(25, 25, 35), panel_rect)
+    p.draw.line(screen, p.Color(60, 60, 80), (panel_x, 0), (panel_x, HEIGHT), 2)
+
+    # Analyse-Daten holen
+    analysis = ChessAI.get_analysis()
+
+    # Titel
+    title_font = p.font.SysFont("Arial", 18, True, False)
+    title = title_font.render("🤖 KI-Analyse (Minimax)", True, p.Color(100, 200, 255))
+    screen.blit(title, (panel_x + 10, 10))
+
+    y_offset = 45
+    font = p.font.SysFont("Arial", 13, False, False)
+    bold_font = p.font.SysFont("Arial", 13, True, False)
+    small_font = p.font.SysFont("Arial", 11, False, False)
+
+    # Suchtiefe
+    depth_text = bold_font.render(
+        f"Suchtiefe: {analysis['depth']}", True, p.Color("white")
+    )
+    screen.blit(depth_text, (panel_x + 10, y_offset))
+    y_offset += 25
+
+    # Statistiken
+    stats_color = p.Color(180, 180, 180)
+    nodes_text = font.render(
+        f"Knoten durchsucht: {analysis['nodes_searched']:,}", True, stats_color
+    )
+    screen.blit(nodes_text, (panel_x + 10, y_offset))
+    y_offset += 20
+
+    pruned_text = font.render(
+        f"Abgeschnittene Zweige: {analysis['pruned_branches']:,}", True, stats_color
+    )
+    screen.blit(pruned_text, (panel_x + 10, y_offset))
+    y_offset += 30
+
+    # Bewertungsbalken
+    score = analysis["position_score"]
+    draw_evaluation_bar(
+        screen, panel_x + 10, y_offset, AI_PANEL_WIDTH - 20, 30, score, gs.whiteToMove
+    )
+    y_offset += 50
+
+    # Materialbalance
+    material = analysis["material_balance"]
+    mat_title = bold_font.render("Materialbalance:", True, p.Color("white"))
+    screen.blit(mat_title, (panel_x + 10, y_offset))
+    y_offset += 22
+
+    white_mat = material.get("white", 0)
+    black_mat = material.get("black", 0)
+    diff = white_mat - black_mat
+    diff_color = (
+        p.Color(100, 255, 100)
+        if diff > 0
+        else p.Color(255, 100, 100) if diff < 0 else p.Color(200, 200, 200)
+    )
+    diff_str = f"+{diff}" if diff > 0 else str(diff)
+
+    mat_text = font.render(
+        f"Weiß: {white_mat}  |  Schwarz: {black_mat}  ({diff_str})", True, diff_color
+    )
+    screen.blit(mat_text, (panel_x + 10, y_offset))
+    y_offset += 35
+
+    # Top Züge mit Bewertungen
+    moves_title = bold_font.render("Top Züge (bewertet):", True, p.Color("white"))
+    screen.blit(moves_title, (panel_x + 10, y_offset))
+    y_offset += 25
+
+    moves_evaluated = analysis["moves_evaluated"]
+    if moves_evaluated:
+        # Sortiert nach Score (beste zuerst für Weiß, umgekehrt für Schwarz)
+        for i, (move, score) in enumerate(moves_evaluated[:8]):
+            # Farbcodierung basierend auf Bewertung
+            if score > 100:
+                move_color = p.Color(100, 255, 100)  # Grün - gut
+            elif score > 0:
+                move_color = p.Color(180, 255, 180)  # Hellgrün
+            elif score > -100:
+                move_color = p.Color(255, 255, 180)  # Gelb - neutral
+            elif score > -300:
+                move_color = p.Color(255, 180, 100)  # Orange
+            else:
+                move_color = p.Color(255, 100, 100)  # Rot - schlecht
+
+            # Rang-Symbol
+            rank_symbols = ["🥇", "🥈", "🥉", "4.", "5.", "6.", "7.", "8."]
+            rank = rank_symbols[i] if i < len(rank_symbols) else f"{i+1}."
+
+            # Score formatieren
+            score_str = f"+{score/100:.2f}" if score >= 0 else f"{score/100:.2f}"
+
+            move_str = f"{rank} {move.get_chess_notation():6s} ({score_str})"
+            move_text = small_font.render(move_str, True, move_color)
+            screen.blit(move_text, (panel_x + 15, y_offset))
+
+            # Mini-Bewertungsbalken
+            bar_width = 60
+            bar_x = panel_x + AI_PANEL_WIDTH - bar_width - 15
+            draw_mini_eval_bar(screen, bar_x, y_offset + 2, bar_width, 12, score)
+
+            y_offset += 18
+    else:
+        no_moves = font.render("Keine Analyse verfügbar", True, p.Color(150, 150, 150))
+        screen.blit(no_moves, (panel_x + 10, y_offset))
+        y_offset += 20
+
+    y_offset += 20
+
+    # Suchbaum-Visualisierung (vereinfacht)
+    tree_title = bold_font.render("Suchbaum-Tiefe:", True, p.Color("white"))
+    screen.blit(tree_title, (panel_x + 10, y_offset))
+    y_offset += 25
+
+    # Visualisiere die Suchtiefe als Baumstruktur
+    draw_search_tree_visualization(
+        screen, panel_x + 10, y_offset, AI_PANEL_WIDTH - 20, 80, analysis
+    )
+    y_offset += 95
+
+    # Hinweis
+    hint_font = p.font.SysFont("Arial", 10, False, True)
+    hint = hint_font.render("Drücke 'V' zum Ausblenden", True, p.Color(100, 100, 120))
+    screen.blit(hint, (panel_x + 10, HEIGHT - 20))
+
+
+def draw_evaluation_bar(screen, x, y, width, height, score, white_to_move):
+    """Zeichnet einen Bewertungsbalken wie bei chess.com"""
+    # Hintergrund
+    p.draw.rect(screen, p.Color(40, 40, 40), (x, y, width, height))
+
+    # Score auf 0-1 normalisieren (±10 Bauern = ±1000 Centipawns)
+    normalized = max(-1, min(1, score / 1000))
+
+    # Weiß-Anteil berechnen (0.5 = ausgeglichen)
+    white_portion = 0.5 + (normalized * 0.5)
+
+    # Weiße Seite
+    white_width = int(width * white_portion)
+    p.draw.rect(screen, p.Color(240, 240, 240), (x, y, white_width, height))
+
+    # Schwarze Seite
+    black_width = width - white_width
+    p.draw.rect(screen, p.Color(30, 30, 30), (x + white_width, y, black_width, height))
+
+    # Mittellinie
+    p.draw.line(
+        screen,
+        p.Color(100, 100, 100),
+        (x + width // 2, y),
+        (x + width // 2, y + height),
+        1,
+    )
+
+    # Score-Text in der Mitte
+    font = p.font.SysFont("Arial", 12, True, False)
+    score_pawns = score / 100
+    if abs(score_pawns) < 0.1:
+        score_text = "0.0"
+    else:
+        score_text = f"+{score_pawns:.1f}" if score_pawns > 0 else f"{score_pawns:.1f}"
+
+    text_color = p.Color("black") if white_portion > 0.5 else p.Color("white")
+    text_surface = font.render(score_text, True, text_color)
+    text_x = (
+        x + (white_width - text_surface.get_width()) // 2
+        if white_portion > 0.5
+        else x + white_width + (black_width - text_surface.get_width()) // 2
+    )
+    screen.blit(text_surface, (text_x, y + (height - text_surface.get_height()) // 2))
+
+    # Rahmen
+    p.draw.rect(screen, p.Color(80, 80, 80), (x, y, width, height), 1)
+
+
+def draw_mini_eval_bar(screen, x, y, width, height, score):
+    """Zeichnet einen Mini-Bewertungsbalken für einzelne Züge"""
+    # Hintergrund
+    p.draw.rect(screen, p.Color(50, 50, 50), (x, y, width, height))
+
+    # Normalisieren
+    normalized = max(-1, min(1, score / 500))
+
+    if normalized >= 0:
+        bar_width = int(width * 0.5 * normalized)
+        p.draw.rect(
+            screen, p.Color(100, 200, 100), (x + width // 2, y, bar_width, height)
+        )
+    else:
+        bar_width = int(width * 0.5 * abs(normalized))
+        p.draw.rect(
+            screen,
+            p.Color(200, 100, 100),
+            (x + width // 2 - bar_width, y, bar_width, height),
+        )
+
+    # Mittellinie
+    p.draw.line(
+        screen,
+        p.Color(150, 150, 150),
+        (x + width // 2, y),
+        (x + width // 2, y + height),
+        1,
+    )
+
+
+def draw_search_tree_visualization(screen, x, y, width, height, analysis):
+    """Zeichnet eine verbesserte Visualisierung des Suchbaums"""
+    depth = analysis["depth"]
+    nodes = analysis["nodes_searched"]
+    pruned = analysis["pruned_branches"]
+
+    # Hintergrund für den Baum
+    tree_bg = p.Rect(x, y, width, height - 15)
+    p.draw.rect(screen, p.Color(35, 35, 45), tree_bg)
+    p.draw.rect(screen, p.Color(60, 60, 80), tree_bg, 1)
+
+    # Padding innerhalb des Rahmens
+    inner_x = x + 10
+    inner_y = y + 8
+    inner_width = width - 20
+    inner_height = height - 30
+
+    # Baum-Struktur zeichnen
+    levels = min(depth + 1, 4)  # Max 4 Ebenen anzeigen
+    level_height = inner_height // levels
+
+    # Zuerst alle Linien zeichnen (hinter den Knoten)
+    for level in range(1, levels):
+        if level == 0:
+            num_nodes = 1
+        else:
+            num_nodes = min(6, 2**level)
+
+        node_spacing = inner_width // (num_nodes + 1)
+        parent_num_nodes = min(6, 2 ** (level - 1))
+        parent_spacing = inner_width // (parent_num_nodes + 1)
+
+        for n in range(num_nodes):
+            node_x = inner_x + node_spacing * (n + 1)
+            node_y = inner_y + level * level_height
+            parent_x = inner_x + parent_spacing * ((n // 2) + 1)
+            parent_y = inner_y + (level - 1) * level_height
+
+            # Gradient-Linie (heller oben, dunkler unten)
+            line_color = p.Color(80, 100, 140)
+            p.draw.line(
+                screen, line_color, (parent_x, parent_y + 6), (node_x, node_y - 2), 2
+            )
+
+    # Dann alle Knoten zeichnen
+    for level in range(levels):
+        if level == 0:
+            num_nodes = 1
+        else:
+            num_nodes = min(6, 2**level)
+
+        node_spacing = inner_width // (num_nodes + 1)
+
+        for n in range(num_nodes):
+            node_x = inner_x + node_spacing * (n + 1)
+            node_y = inner_y + level * level_height
+
+            # Knotengröße und Farbe basierend auf Tiefe
+            if level == 0:
+                # Wurzelknoten - größer und golden
+                radius = 8
+                node_color = p.Color(255, 200, 50)
+                border_color = p.Color(200, 150, 0)
+            elif level == levels - 1:
+                # Blattknoten - blau
+                radius = 5
+                node_color = p.Color(100, 180, 255)
+                border_color = p.Color(60, 120, 200)
+            else:
+                # Zwischenknoten - grün abgestuft
+                radius = 6
+                green_intensity = 255 - (level * 50)
+                node_color = p.Color(100, green_intensity, 100)
+                border_color = p.Color(60, green_intensity - 40, 60)
+
+            # Knoten mit Rand zeichnen
+            p.draw.circle(screen, node_color, (node_x, node_y), radius)
+            p.draw.circle(screen, border_color, (node_x, node_y), radius, 1)
+
+    # Legende unter dem Baum
+    font = p.font.SysFont("Arial", 10, False, False)
+    legend_y = y + height - 12
+
+    # Tiefe-Anzeige
+    depth_text = font.render(f"Tiefe: {depth}", True, p.Color(255, 200, 50))
+    screen.blit(depth_text, (x + 5, legend_y))
+
+    # Knoten-Anzeige
+    nodes_text = font.render(f"{nodes:,} Knoten", True, p.Color(100, 180, 255))
+    screen.blit(nodes_text, (x + 60, legend_y))
+
+    # Pruning-Anzeige
+    if pruned > 0:
+        pruned_text = font.render(f"{pruned:,} Schnitte", True, p.Color(255, 150, 100))
+        screen.blit(pruned_text, (x + 145, legend_y))
 
 
 def save_pgn(gs):

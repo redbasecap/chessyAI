@@ -3,8 +3,8 @@ revision = 3
 requires-python = ">=3.9"
 
 [[package]]
-name = "chessy"
-version = "1.0.0"
+name = "chessyai"
+version = "2.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "pygame" },

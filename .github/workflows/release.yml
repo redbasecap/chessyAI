@@ -86,7 +86,7 @@ jobs:
     if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.publish_to_pypi == 'true')
     environment:
       name: testpypi
-      url: https://test.pypi.org/p/chessy
+      url: https://test.pypi.org/p/chessyai
     permissions:
       id-token: write
     
@@ -110,7 +110,7 @@ jobs:
     if: github.event_name == 'release'
     environment:
       name: pypi
-      url: https://pypi.org/p/chessy
+      url: https://pypi.org/p/chessyai
     permissions:
       id-token: write
     

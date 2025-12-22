@@ -1,4 +1,4 @@
-# ♟️ Chessy - Chess Engine
+# ♟️ ChessyAI - Chess Engine
 
 A fully-featured chess engine with graphical user interface and AI opponent built with Python and Pygame.
 
@@ -60,8 +60,8 @@ A fully-featured chess engine with graphical user interface and AI opponent buil
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone the repository
-git clone https://github.com/redbasecap/chessy.git
-cd chessy
+git clone https://github.com/redbasecap/ChessyAI.git
+cd ChessyAI
 
 # Install dependencies
 uv sync
@@ -77,8 +77,8 @@ uv run python ChessMain.py
 
 ```bash
 # Clone the repository
-git clone https://github.com/redbasecap/chessy.git
-cd chessy
+git clone https://github.com/redbasecap/ChessyAI.git
+cd ChessyAI
 
 # Create virtual environment
 python -m venv .venv
@@ -115,7 +115,7 @@ player_two = False  # Black: True = Human, False = AI
 ## 📁 Project Structure
 
 ```
-chessy/
+ChessyAI/
 ├── ChessEngine.py      # Game logic and state management
 ├── ChessMain.py        # GUI and user input handling
 ├── ChessAI.py          # AI opponent (Minimax + Alpha-Beta)

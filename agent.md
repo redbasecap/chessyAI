@@ -1,11 +1,11 @@
-# Chessy - Chess Engine Analyse
+# ChessyAI - Chess Engine Analyse
 
 ## Projektübersicht
 
-**Projektname:** Chessy  
+**Projektname:** ChessyAI  
 **Typ:** Schach-Engine mit grafischer Benutzeroberfläche  
 **Technologie:** Python + Pygame  
-**Status:** ✅ Vollständig spielbar (v2.0) - mit KI-Gegner!
+**Status:** ✅ Vollständig spielbar (v2.1) - mit KI-Gegner und Analyse-Panel!
 
 ---
 
@@ -54,10 +54,11 @@
 - ✅ **Stellungsbewertung:** Material + Positionstabellen
 - ✅ **Figurenwerte:** K=∞, Q=900, R=500, B=330, N=320, p=100
 - ✅ **Positionstabellen:** Für alle Figurentypen
+- ✅ **Analyse-Tracking:** Knoten, Pruning-Statistiken, Top-Züge
 
 ### ChessMain.py - Benutzeroberfläche
 
-- ✅ **Pygame-Fenster:** 513x763 Pixel (mit Seitenpanel)
+- ✅ **Pygame-Fenster:** 513x763 Pixel (mit Seitenpanel), erweiterbar auf 1063px mit Analyse
 - ✅ **Schachbrett-Rendering:** Farbiges 8x8 Schachbrett (Orange/Dunkelrot)
 - ✅ **Figuren-Darstellung:** Alle 12 Figuren werden geladen und skaliert
 - ✅ **Mausinteraktion:** Klick-basierte Figurenauswahl und Bewegung
@@ -71,6 +72,7 @@
 - ✅ **Schachuhr:** 10 Minuten pro Spieler
 - ✅ **Soundeffekte:** Für Züge, Schlagen, Schach, Rochade, Spielende
 - ✅ **PGN-Export:** Partien speichern
+- ✅ **KI-Analyse-Panel:** Visualisierung der Minimax-Berechnungen (Taste V)
 
 ---
 
@@ -108,6 +110,7 @@
 | Ausgewählte Figur hervorheben | ✅ Implementiert |
 | Letzten Zug hervorheben       | ✅ Implementiert |
 | Spielende-Anzeige             | ✅ Implementiert |
+| KI-Analyse-Visualisierung     | ✅ Implementiert |
 
 ### Mögliche Erweiterungen (TODO)
 
@@ -122,10 +125,13 @@
 
 ## Tastatursteuerung
 
-| Taste | Aktion                        |
-| ----- | ----------------------------- |
-| `Z`   | Letzten Zug rückgängig machen |
-| `R`   | Neues Spiel starten           |
+| Taste | Aktion                           |
+| ----- | -------------------------------- |
+| `Z`   | Letzten Zug rückgängig machen    |
+| `R`   | Neues Spiel starten              |
+| `S`   | Partie als PGN speichern         |
+| `F`   | KI-Zug erzwingen                 |
+| `V`   | KI-Analyse-Panel ein-/ausblenden |
 | `S`   | Partie als PGN speichern      |
 | `F`   | KI-Zug erzwingen              |
 

@@ -100,23 +100,102 @@ CHECKMATE = 100000
 STALEMATE = 0
 DEPTH = 3  # Suchtiefe
 
+# Globale Variablen für Visualisierung
+ai_analysis = {
+    "moves_evaluated": [],  # Liste von (move, score) Tupeln
+    "nodes_searched": 0,  # Anzahl durchsuchter Knoten
+    "pruned_branches": 0,  # Anzahl abgeschnittener Zweige
+    "best_line": [],  # Beste Zugfolge
+    "position_score": 0,  # Aktuelle Stellungsbewertung
+    "depth": DEPTH,  # Suchtiefe
+    "material_balance": {},  # Materialbalance
+    "search_tree": [],  # Suchbaum für Visualisierung
+}
+
+
+def get_analysis():
+    """Gibt die aktuelle Analyse zurück"""
+    return ai_analysis
+
+
+def reset_analysis():
+    """Setzt die Analyse zurück"""
+    global ai_analysis
+    ai_analysis = {
+        "moves_evaluated": [],
+        "nodes_searched": 0,
+        "pruned_branches": 0,
+        "best_line": [],
+        "position_score": 0,
+        "depth": DEPTH,
+        "material_balance": {},
+        "search_tree": [],
+    }
+
+
+def calculate_material_balance(gs):
+    """Berechnet die Materialbalance"""
+    balance = {"w": {}, "b": {}}
+    for r in range(8):
+        for c in range(8):
+            piece = gs.board[r][c]
+            if piece != "--":
+                color = piece[0]
+                piece_type = piece[1]
+                if piece_type not in balance[color]:
+                    balance[color][piece_type] = 0
+                balance[color][piece_type] += 1
+    return balance
+
 
 def find_best_move(gs, valid_moves):
     """Findet den besten Zug mit Minimax und Alpha-Beta Pruning"""
-    global next_move
+    global next_move, ai_analysis
     next_move = None
+    reset_analysis()
+
+    # Materialbalance berechnen
+    ai_analysis["material_balance"] = calculate_material_balance(gs)
+    ai_analysis["position_score"] = score_board(gs)
+
     random.shuffle(valid_moves)  # Für Varianz bei gleich guten Zügen
 
-    find_move_negamax_alpha_beta(
-        gs, valid_moves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1
-    )
+    # Alle Züge mit ihren Scores sammeln
+    move_scores = []
+
+    for move in valid_moves:
+        gs.make_move(move)
+        next_moves = gs.get_valid_moves()
+        score = -find_move_negamax_alpha_beta(
+            gs,
+            next_moves,
+            DEPTH - 1,
+            -CHECKMATE,
+            CHECKMATE,
+            -1 if gs.whiteToMove else 1,
+            [move],
+        )
+        gs.undo_move()
+        move_scores.append((move, score))
+
+    # Nach Score sortieren
+    move_scores.sort(key=lambda x: x[1], reverse=True)
+    ai_analysis["moves_evaluated"] = move_scores[:10]  # Top 10 Züge
+
+    if move_scores:
+        next_move = move_scores[0][0]
+        ai_analysis["best_line"] = [next_move]
 
     return next_move
 
 
-def find_move_negamax_alpha_beta(gs, valid_moves, depth, alpha, beta, turn_multiplier):
+def find_move_negamax_alpha_beta(
+    gs, valid_moves, depth, alpha, beta, turn_multiplier, current_line=None
+):
     """Negamax mit Alpha-Beta Pruning"""
-    global next_move
+    global ai_analysis
+
+    ai_analysis["nodes_searched"] += 1
 
     if depth == 0:
         return turn_multiplier * score_board(gs)
@@ -125,20 +204,23 @@ def find_move_negamax_alpha_beta(gs, valid_moves, depth, alpha, beta, turn_multi
     for move in valid_moves:
         gs.make_move(move)
         next_moves = gs.get_valid_moves()
+
+        new_line = (current_line or []) + [move]
         score = -find_move_negamax_alpha_beta(
-            gs, next_moves, depth - 1, -beta, -alpha, -turn_multiplier
+            gs, next_moves, depth - 1, -beta, -alpha, -turn_multiplier, new_line
         )
 
         if score > max_score:
             max_score = score
-            if depth == DEPTH:
-                next_move = move
+            if depth == DEPTH - 1 and current_line:
+                ai_analysis["best_line"] = current_line + [move]
 
         gs.undo_move()
 
         if max_score > alpha:
             alpha = max_score
         if alpha >= beta:
+            ai_analysis["pruned_branches"] += 1
             break
 
     return max_score
