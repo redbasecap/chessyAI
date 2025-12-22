@@ -1,0 +1,23 @@
+[project]
+name = "chessy"
+version = "1.0.0"
+description = "A fully-featured chess engine with graphical user interface"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+dependencies = [
+    "pygame>=2.5.0",
+]
+
+[project.scripts]
+chessy = "ChessMain:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[dependency-groups]
+dev = []
