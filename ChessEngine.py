@@ -31,6 +31,9 @@ class GameState:
         # Für En Passant
         self.enPassantPossible = ()  # Koordinaten wo en passant möglich ist
 
+        # Rochade-/En-Passant-Status vor jedem Zug (für undo_move)
+        self.stateLog = []
+
         # Schach/Matt/Patt Status
         self.checkmate = False
         self.stalemate = False
@@ -48,6 +51,15 @@ class GameState:
 
     def make_move(self, move):
         """Führt einen Zug aus"""
+        self.stateLog.append(
+            (
+                self.whiteKingMoved,
+                self.blackKingMoved,
+                list(self.whiteRooksMoved),
+                list(self.blackRooksMoved),
+                self.enPassantPossible,
+            )
+        )
         self.board[move.start_row][move.start_col] = "--"
         self.board[move.end_row][move.end_col] = move.piece_moved
         self.moveLog.append(move)
@@ -72,6 +84,12 @@ class GameState:
                 self.blackRooksMoved[0] = True
             elif move.start_row == 0 and move.start_col == 7:
                 self.blackRooksMoved[1] = True
+
+        # Geschlagener Turm auf Ausgangsfeld: keine Rochade mehr mit ihm
+        if move.piece_captured == "wR" and move.end_row == 7 and move.end_col in (0, 7):
+            self.whiteRooksMoved[0 if move.end_col == 0 else 1] = True
+        elif move.piece_captured == "bR" and move.end_row == 0 and move.end_col in (0, 7):
+            self.blackRooksMoved[0 if move.end_col == 0 else 1] = True
 
         # Bauernumwandlung
         if move.is_pawn_promotion:
@@ -141,6 +159,16 @@ class GameState:
                     move.end_col + 1
                 ]
                 self.board[move.end_row][move.end_col + 1] = "--"
+
+        # Rochade-Rechte und En-Passant-Status wiederherstellen
+        if self.stateLog:
+            (
+                self.whiteKingMoved,
+                self.blackKingMoved,
+                self.whiteRooksMoved,
+                self.blackRooksMoved,
+                self.enPassantPossible,
+            ) = self.stateLog.pop()
 
         # Status zurücksetzen
         self.checkmate = False

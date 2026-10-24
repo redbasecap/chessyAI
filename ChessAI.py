@@ -172,7 +172,7 @@ def find_best_move(gs, valid_moves):
             DEPTH - 1,
             -CHECKMATE,
             CHECKMATE,
-            -1 if gs.whiteToMove else 1,
+            1 if gs.whiteToMove else -1,
             [move],
         )
         gs.undo_move()
