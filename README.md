@@ -1,5 +1,7 @@
 # ♟️ ChessyAI - Chess Engine
 
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/redbasecap)
+
 A fully-featured chess engine with graphical user interface and AI opponent built with Python and Pygame.
 
 ![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
